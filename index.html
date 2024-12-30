@@ -1,0 +1,513 @@
+<html>
+	<head>
+		<script
+			defer
+			src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+		></script>
+
+		<title>Sumoma</title>
+
+		<!-- Webapp Config -->
+		<meta name="viewport" content="width=device-width, user-scalable=no">
+		<link rel="apple-touch-icon" href="./images/icon.png">
+		<meta name="apple-mobile-web-app-title" content="Sumoma">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<!-- Fonts -->
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;400;600&display=swap"
+			rel="stylesheet"
+		/>
+
+		<style>
+			:root {
+				--red: #b80a0a;
+			}
+
+			* {
+				box-sizing: border-box;
+				font-family: 'Poppins', sans-serif;
+			}
+
+			html {
+				background: #f6f8ff;
+				padding-bottom: 2rem;
+			}
+
+			.app {
+				margin: 0 auto;
+				width: 100%;
+				max-width: 700px;
+			}
+
+			.titleImage {
+				height: 5rem;
+				margin-right: 0.5rem;
+			}
+
+			.title {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+
+				margin: 0;
+				font-size: 3rem;
+			}
+
+			header {
+				display: flex;
+				margin-bottom: 1rem;
+			}
+
+			.boardContainer {
+				display: grid;
+				grid-template-areas:
+					'. colhints'
+					'rowhints grid';
+				grid-template-columns: auto 1fr;
+
+				margin-bottom: 2rem;
+			}
+
+			.grid {
+				grid-area: grid;
+
+				aspect-ratio: 1 / 1;
+
+				display: flex;
+				flex-direction: column;
+			}
+
+			.row {
+				display: flex;
+				flex-grow: 1;
+			}
+
+			.cell {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+
+				border: 1px solid black;
+				flex: 1 1 0px;
+
+				position: relative;
+
+				font-size: 1.5rem;
+			}
+
+			.cellIsSelected {
+				background-color: #333;
+				color: white;
+			}
+
+			.cellIsExcluded {
+				background-color: #cdcdcd;
+				color: #9c9c9c;
+			}
+
+			.rowHintsContainer {
+				grid-area: rowhints;
+
+				display: flex;
+				flex-direction: column;
+			}
+
+			.colHintsContainer {
+				grid-area: colhints;
+
+				display: flex;
+			}
+
+			.hint {
+				padding: 0.5rem;
+
+				background-color: #333;
+				color: white;
+				margin: 0.1rem;
+				border-radius: 0.2rem;
+
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				flex: 1 1 0px;
+			}
+
+			.solvedRowOrCol {
+				background-color: green;
+			}
+
+			.grid {
+				border: 1px solid black;
+			}
+
+			.levels {
+				text-align: center;
+				display: block;
+			}
+
+			.level {
+				display: inline-block;
+				padding: 1rem 0.5rem;
+				background: #cececeaa;
+				cursor: pointer;
+				border: 0.5rem solid #cececeaa;
+			}
+
+			.selectedLevel {
+				border: 0.5rem solid var(--red);
+				color: var(--red);
+			}
+
+			.check {
+				display: block;
+				text-align: center;
+				flex: 1;
+			}
+
+			.headerButton {
+				display: block;
+				text-align: center;
+				font-size: 3rem;
+				cursor: pointer;
+			}
+
+			.dialog {
+				text-align: center;
+				text-wrap: balance;
+
+				background: white;
+				padding: 1rem 2rem;
+
+				border-radius: 0.3rem;
+				box-shadow: 0 0 5rem #000;
+			}
+
+			.dialogBackground {
+				position: fixed;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				background: #000000aa;
+			}
+
+			.dialogBackgroundWin {
+				background: linear-gradient(-45deg, #f0e54caa, #68c233aa, #2ec25baa, #238bd5aa);
+				background-size: 400% 400%;
+				animation: gradient 2s ease infinite;
+				height: 100vh;
+			}
+			
+			.textButton {
+				background: #eee;
+				cursor: pointer;
+				display: inline-block;
+				padding: 0.5rem 1rem;
+			}
+			
+			.label {
+				display: block;
+				text-align: center;
+				color: #555;
+				font-size: 0.8rem;
+				padding: 1rem 0 0.2rem 0;
+			}
+
+			@keyframes gradient {
+				0% {
+					background-position: 0% 50%;
+				}
+				50% {
+					background-position: 100% 50%;
+				}
+				100% {
+					background-position: 0% 50%;
+				}
+			}
+
+			@media screen and (orientation:landscape) {
+				.title {
+					position: fixed;
+					top: 0;
+					left: 0;
+					font-size: 2rem;
+
+					padding: 0.5rem 1rem;
+				}
+
+				.titleImage {
+					height: 2rem;
+				}
+
+				.app {
+					max-width: 500px;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div class="app" x-data="sumoma">
+			<h1 class="title">
+				<img class="titleImage" src="images/icon_transparent.png" alt="Sumoma">
+				Sumoma</h1>
+			<header>
+				<div class="levels">
+					<span class="label">Level</span>
+					<span
+						class="level"
+						:class="n == 4 ? 'selectedLevel' : ''"
+						@click="n = 4"
+						>Leicht</span
+					>
+					<span
+						class="level"
+						:class="n == 5 ? 'selectedLevel' : ''"
+						@click="n = 5"
+						>Mittel</span
+					>
+					<span
+						class="level"
+						:class="n == 6 ? 'selectedLevel' : ''"
+						@click="n = 6"
+						>Schwer</span
+					>
+				</div>
+
+				<div class="check">
+					<span class="label">Lösung prüfen</span>
+					<span class="headerButton" @click="checkSolution()">
+						☑️
+					</span>
+				</div>
+
+				<div class="newGame">
+					<span class="label">Neues Spiel</span>
+					<span class="headerButton" @click="newGame()">🚀</span>
+				</div>
+			</header>
+
+			<div class="boardContainer">
+				<div class="colHintsContainer">
+					<template x-for="hint, i in colHints">
+						<div class="hint" :class="colsSolved[i] ? 'solvedRowOrCol' : ''" x-text="hint"></div>
+					</template>
+				</div>
+
+				<div class="rowHintsContainer">
+					<template x-for="hint, i in rowHints">
+						<div class="hint" :class="rowsSolved[i] ? 'solvedRowOrCol' : ''" x-text="hint"></div>
+					</template>
+				</div>
+
+				<div class="grid">
+					<template x-for="(row, ridx) in board">
+						<div class="row">
+							<template x-for="(cell, cidx) in row">
+								<div
+									@click="selectCell(ridx, cidx)"
+									class="cell"
+									:class="getCellModeClass(ridx, cidx)"
+									x-text="cell"
+								></div>
+							</template>
+						</div>
+					</template>
+				</div>
+			</div>
+
+			<footer>
+				<details>
+					<summary>Spielanleitung</summary>
+					<h1>Anleitung</h1>
+					<p>
+						Beim Sumoma musst du <b>Sum</b>men bilden, <b>Oma</b>! 😉
+						Im Gitter befinden sich Zahlen zwischen 1 und 9.
+						Links und oberhalb des Gitters findest du Zahlen, die angeben, wie hoch die Summen der markierten Kästchen in der jeweiligen Zeile oder Spalte sein müssen.
+					</p>
+					<p>
+						<b>Beispiel:</b> Steht eine "7" links von der ersten Zeile, musst du so viele Zahlen in der ersten Zeile markieren, dass die Summe der Zahlen 7 ist.
+						Abhängig von den anderen Zahlen außerhalb des Gitters sind die zu markierenden Zahlen vielleicht nicht direkt ersichtlich.
+					</p>
+
+					<h1>Bedienung</h1>
+					<p>
+						Wenn du auf ein Kästchen tippst, wird dieses zunächst markiert.
+						Tippst du es noch einmal an, wird es ausgeschlossen.
+						Noch einmal Tippen macht das Kästchen wieder neutral.
+						Du kannst diese Tipptechnik nutzen, um das Spielfeld auszufüllen.
+					</p>
+					<p>
+						Bist du mit dem Ausfüllen fertig, kannst du oben auf "Lösung prüfen" tippen, um deine Lösung zu überprüfen.
+						Stimmt die Lösung, wird dir das mitgeteilt.
+						Stimmt die Lösung nicht mit den Hinweisen überein, werden die korrekten Spalten und Zeilen in Grün markiert.
+						In den verbleibenden Spalten und Zeilen stimmen die ausgefüllten Kästchen nicht mit den Hinweisen überein. Du solltest also noch einmal schauen, wo das Problem liegt.
+					</p>
+
+					<p>Viel Spaß beim Spielen!</p>
+				</details>
+			</footer>
+
+			<template x-if="solved">
+				<div class="dialogBackground dialogBackgroundWin">
+					<div class="dialog">
+						Juchu, du hast gewonnen! 🎉
+						<br />
+						<br />
+						<div class="textButton" @click="newGame()">
+							Neues Spiel 🚀
+						</div>
+					</div>
+				</div>
+			</template>
+
+			<template x-if="!solved && showContinue">
+				<div class="dialogBackground">
+					<div class="dialog">
+						Du hast noch nicht alles richtig ausgefüllt.
+						Aber was nicht passt, wird passend gemacht. 😉
+						Die Spalten und Zeilen, die passen, sind grün markiert.
+						Versuche es doch von hier aus weiter. 🤔
+						<br />
+						<br />
+						<div class="textButton" @click="continueGame()">
+							Weiter geht's!
+						</div>
+					</div>
+				</div>
+			</template>
+
+		<script>
+			// CELL MODES
+			// ==========
+			// 0: not selected
+			// 1: selected
+			// 2: exclude
+			function data() {
+				return {
+					n: 4,
+					minNumber: 1,
+					maxNumber: 9,
+					prob: 0.5,
+					// The board with its numbers
+					board: [],
+					// The selection of the user (their modes)
+					boardSelection: [],
+					rowHints: [],
+					colHints: [],
+					solved: false,
+					showContinue: false,
+					rowsSolved: [],
+					colsSolved: [],
+					getHints (board, selectionMask) {
+						rowHints = new Array(this.n).fill(0);
+						colHints = new Array(this.n).fill(0);
+
+						for (let row = 0; row < this.n; row++) {
+							for (let col = 0; col < this.n; col++) {
+								let cellBoard = board[row][col];
+								let cellSelected = selectionMask[row][col];
+
+								if (cellSelected == 1) {
+									rowHints[row] += cellBoard;
+									colHints[col] += cellBoard;
+								}
+							}
+						}
+
+						return {
+							"rows": rowHints,
+							"cols": colHints,
+						}
+					},
+					getRandomInteger(min, max) {
+						return Math.floor(Math.random() * (max - min + 1)) + min;
+					},
+					generatePuzzle() {
+						// Generate initial board: Empty cells of correct size
+						this.board = new Array(this.n).fill(null).map(() => new Array(this.n).fill(null).map(() => this.getRandomInteger(this.minNumber, this.maxNumber)));
+						
+						// Generate solution board:
+						// Assign a cell mode based on the probability
+						selectedSolutionMask = new Array(this.n).fill(null).map(() => new Array(this.n).fill(null).map(() => {
+							return Math.random() < this.prob ? 1 : 0;
+						}));
+
+						hints = this.getHints(this.board, selectedSolutionMask);
+
+						this.rowHints = hints["rows"];
+						this.colHints = hints["cols"];
+
+						this.boardSelection = new Array(this.n).fill(null).map(() => new Array(this.n).fill(0));
+					},
+					checkSolution() {
+						// Use this.getHints for the current state of the board
+						const currentHints = this.getHints(this.board, this.boardSelection);
+						const currentRowHints = currentHints["rows"];
+						const currentColHints = currentHints["cols"];
+
+						const colsSolved = [];
+						const rowsSolved = [];
+						let everythingSolved = true;
+
+						// Check if hints are the same for solution and for current board
+						for (let i = 0; i < this.n; i++) {
+							let cRH = currentRowHints[i];
+							let rH = this.rowHints[i];
+							rowsSolved.push(cRH == rH);
+
+							let cCH = currentColHints[i];
+							let cH = this.colHints[i];
+							colsSolved.push(cCH == cH);
+
+							if ((cRH != rH) || (cCH != cH)) {
+								everythingSolved = false;
+							}
+						}
+
+						this.solved = everythingSolved;
+						this.showContinue = !everythingSolved;
+						this.rowsSolved = rowsSolved;
+						this.colsSolved = colsSolved;
+					},
+					init() {
+						this.newGame();
+
+						this.$watch('n', (value) => {
+							this.newGame();
+						});
+					},
+					selectCell(ridx, cidx) {
+						// Cycle through modes
+						this.boardSelection[ridx][cidx] = (this.boardSelection[ridx][cidx] + 1) % 3;
+					},
+					getCellModeClass(ridx, cidx) {
+						const modes = ["", "cellIsSelected", "cellIsExcluded"];
+						return modes[this.boardSelection[ridx][cidx]];
+					},
+					newGame() {
+						this.solved = false;
+						this.rowsSolved = new Array(this.n).fill(false);
+						this.colsSolved = new Array(this.n).fill(false);
+
+						this.generatePuzzle();
+					},
+					continueGame() {
+						this.showContinue = false;
+					}
+				};
+			}
+
+			document.addEventListener('alpine:init', () => {
+				Alpine.data('sumoma', data);
+			});
+		</script>
+	</body>
+</html>
