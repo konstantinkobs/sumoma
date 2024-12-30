@@ -186,6 +186,11 @@
 				box-shadow: 0 0 5rem #000;
 			}
 
+			.dialog video {
+				width: 100%;
+				max-width: 250px;
+			}
+
 			.dialogBackground {
 				position: fixed;
 				display: flex;
@@ -358,6 +363,8 @@
 			<template x-if="solved">
 				<div class="dialogBackground dialogBackgroundWin">
 					<div class="dialog">
+						<video autoplay loop muted playsinline src="images/winning.mov"></video>
+						<br />
 						Juchu, du hast gewonnen! 🎉
 						<br />
 						<br />
